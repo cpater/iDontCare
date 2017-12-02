@@ -1,4 +1,5 @@
 import javassist.*;
+import rocks.nullpointer.IDontCareException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -25,9 +26,10 @@ public class NPETransformer implements ClassFileTransformer {
             CtMethod[] ctClassMethods = ctClass.getDeclaredMethods();
             for (CtMethod ctClassMethod : ctClassMethods) {
                 CtClass etype = ClassPool.getDefault().get("java.lang.NullPointerException");
-                ctClassMethod.addCatch("{ throw new rocks.nullpointer.IDontCareException((null==$e.getMessage())?\"\":$e.getMessage()); }", etype);
+                ctClassMethod.addCatch("{ if ($e instanceof rocks.nullpointer.IDontCareException) { throw $e; } else { throw new rocks.nullpointer.IDontCareException((null==$e.getMessage())?\"\":$e.getMessage()); } }", etype);
             }
             bytecode = ctClass.toBytecode();
+
         } catch (IOException e) {
             // SILENT DEATH
         } catch (CannotCompileException e) {
